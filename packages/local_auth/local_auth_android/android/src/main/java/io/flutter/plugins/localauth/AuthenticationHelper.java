@@ -259,7 +259,10 @@ class AuthenticationHelper extends BiometricPrompt.AuthenticationCallback
               "SECRETBiometric"
 
                       .getBytes(Charset.defaultCharset()));
-      byte[] encryptedOriginal = getCipher().doFinal("SECRETBiometric".getBytes(Charset.defaultCharset()));
+      Cipher cipher = getCipher();
+      SecretKey secretKey = getSecretKey();
+      cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+      byte[] encryptedOriginal = cipher.doFinal("SECRETBiometric".getBytes(Charset.defaultCharset()));
       if(encryptedInfo == encryptedOriginal){
         completionHandler.onSuccess();
       }else{
@@ -273,6 +276,16 @@ class AuthenticationHelper extends BiometricPrompt.AuthenticationCallback
     } catch (NoSuchPaddingException e) {
       e.printStackTrace();
     } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+    } catch (UnrecoverableKeyException e) {
+      e.printStackTrace();
+    } catch (CertificateException e) {
+      e.printStackTrace();
+    } catch (KeyStoreException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InvalidKeyException e) {
       e.printStackTrace();
     }
     stop();
