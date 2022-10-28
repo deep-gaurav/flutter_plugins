@@ -128,8 +128,7 @@ class AuthenticationHelper extends BiometricPrompt.AuthenticationCallback
             .setConfirmationRequired((Boolean) call.argument("sensitiveTransaction"));
 
     int allowedAuthenticators =
-        BiometricManager.Authenticators.BIOMETRIC_WEAK
-            | BiometricManager.Authenticators.BIOMETRIC_STRONG;
+        BiometricManager.Authenticators.BIOMETRIC_STRONG;
 
     if (allowCredentials) {
       allowedAuthenticators |= BiometricManager.Authenticators.DEVICE_CREDENTIAL;
