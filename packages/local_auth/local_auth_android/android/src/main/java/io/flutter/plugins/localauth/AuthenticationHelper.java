@@ -11,15 +11,19 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.fragment.app.FragmentActivity;
@@ -27,7 +31,27 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
 import io.flutter.plugin.common.MethodCall;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.Objects;
 import java.util.concurrent.Executor;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 
 /**
  * Authenticates the user with biometrics and sends corresponding response back to Flutter.
@@ -70,18 +94,30 @@ class AuthenticationHelper extends BiometricPrompt.AuthenticationCallback
   private boolean activityPaused = false;
   private BiometricPrompt biometricPrompt;
 
+  @RequiresApi(api = Build.VERSION_CODES.M)
   AuthenticationHelper(
       Lifecycle lifecycle,
       FragmentActivity activity,
       MethodCall call,
       AuthCompletionHandler completionHandler,
-      boolean allowCredentials) {
+      boolean allowCredentials) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchProviderException {
     this.lifecycle = lifecycle;
     this.activity = activity;
     this.completionHandler = completionHandler;
     this.call = call;
     this.isAuthSticky = call.argument("stickyAuth");
     this.uiThreadExecutor = new UiThreadExecutor();
+
+    generateSecretKey(new KeyGenParameterSpec.Builder(
+            "BiometricAuth"
+
+            ,
+            KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+            .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+            .setUserAuthenticationRequired(true)
+            .build());
+
 
     BiometricPrompt.PromptInfo.Builder promptBuilder =
         new BiometricPrompt.PromptInfo.Builder()
@@ -105,15 +141,47 @@ class AuthenticationHelper extends BiometricPrompt.AuthenticationCallback
     this.promptInfo = promptBuilder.build();
   }
 
+  private void generateSecretKey(KeyGenParameterSpec keyGenParameterSpec) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
+    KeyGenerator keyGenerator = KeyGenerator.getInstance(
+            KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      keyGenerator.init(keyGenParameterSpec);
+    }
+    keyGenerator.generateKey();
+  }
+
+  private SecretKey getSecretKey() throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
+    KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+
+    // Before the keystore can be accessed, it must be loaded.
+    keyStore.load(null);
+    return ((SecretKey)keyStore.getKey("BiometricAuth"
+
+            , null));
+  }
+
+  private Cipher getCipher() throws NoSuchPaddingException, NoSuchAlgorithmException {
+    return Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/"
+            + KeyProperties.BLOCK_MODE_CBC + "/"
+            + KeyProperties.ENCRYPTION_PADDING_PKCS7);
+  }
+
+
   /** Start the biometric listener. */
-  void authenticate() {
+  void authenticate() throws NoSuchPaddingException, NoSuchAlgorithmException, UnrecoverableKeyException, CertificateException, KeyStoreException, IOException, InvalidKeyException {
     if (lifecycle != null) {
       lifecycle.addObserver(this);
     } else {
       activity.getApplication().registerActivityLifecycleCallbacks(this);
     }
     biometricPrompt = new BiometricPrompt(activity, uiThreadExecutor, this);
-    biometricPrompt.authenticate(promptInfo);
+    Cipher cipher = getCipher();
+    SecretKey secretKey = getSecretKey();
+    cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+
+    biometricPrompt.authenticate(promptInfo,
+            new BiometricPrompt.CryptoObject(cipher)
+            );
   }
 
   /** Cancels the biometric authentication. */
@@ -187,7 +255,27 @@ class AuthenticationHelper extends BiometricPrompt.AuthenticationCallback
 
   @Override
   public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
-    completionHandler.onSuccess();
+    try {
+      byte[] encryptedInfo = Objects.requireNonNull(Objects.requireNonNull(result.getCryptoObject()).getCipher()).doFinal(
+              "SECRETBiometric"
+
+                      .getBytes(Charset.defaultCharset()));
+      byte[] encryptedOriginal = getCipher().doFinal("SECRETBiometric".getBytes(Charset.defaultCharset()));
+      if(encryptedInfo == encryptedOriginal){
+        completionHandler.onSuccess();
+      }else{
+        completionHandler.onFailure();
+      }
+
+    } catch (BadPaddingException e) {
+      e.printStackTrace();
+    } catch (IllegalBlockSizeException e) {
+      e.printStackTrace();
+    } catch (NoSuchPaddingException e) {
+      e.printStackTrace();
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+    }
     stop();
   }
 

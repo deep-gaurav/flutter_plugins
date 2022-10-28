@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.VisibleForTesting;
 import androidx.biometric.BiometricManager;
 import androidx.fragment.app.FragmentActivity;
@@ -28,8 +29,19 @@ import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.plugins.localauth.AuthenticationHelper.AuthCompletionHandler;
+
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.crypto.NoSuchPaddingException;
 
 /**
  * Flutter plugin providing access to local authentication.
@@ -93,11 +105,32 @@ public class LocalAuthPlugin implements MethodCallHandler, FlutterPlugin, Activi
    */
   public LocalAuthPlugin() {}
 
+  @RequiresApi(api = Build.VERSION_CODES.M)
   @Override
   public void onMethodCall(MethodCall call, @NonNull final Result result) {
     switch (call.method) {
       case "authenticate":
-        authenticate(call, result);
+        try {
+          authenticate(call, result);
+        } catch (InvalidAlgorithmParameterException e) {
+          result.error("NotAvailable", "Required security features not enabled", null);
+        } catch (UnrecoverableKeyException e) {
+          result.error("NotAvailable", "Required security features not enabled", null);
+        } catch (NoSuchPaddingException e) {
+          result.error("NotAvailable", "Required security features not enabled", null);
+        } catch (CertificateException e) {
+          result.error("NotAvailable", "Required security features not enabled", null);
+        } catch (NoSuchAlgorithmException e) {
+          result.error("NotAvailable", "Required security features not enabled", null);
+        } catch (KeyStoreException e) {
+          result.error("NotAvailable", "Required security features not enabled", null);
+        } catch (IOException e) {
+          result.error("NotAvailable", "Required security features not enabled", null);
+        } catch (NoSuchProviderException e) {
+          result.error("NotAvailable", "Required security features not enabled", null);
+        } catch (InvalidKeyException e) {
+          result.error("NotAvailable", "Required security features not enabled", null);
+        }
         break;
       case "getEnrolledBiometrics":
         getEnrolledBiometrics(result);
@@ -120,7 +153,8 @@ public class LocalAuthPlugin implements MethodCallHandler, FlutterPlugin, Activi
   /*
    * Starts authentication process
    */
-  private void authenticate(MethodCall call, final Result result) {
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  private void authenticate(MethodCall call, final Result result) throws InvalidAlgorithmParameterException, UnrecoverableKeyException, NoSuchPaddingException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, NoSuchProviderException, InvalidKeyException {
     if (authInProgress.get()) {
       result.error("auth_in_progress", "Authentication in progress", null);
       return;
@@ -177,9 +211,10 @@ public class LocalAuthPlugin implements MethodCallHandler, FlutterPlugin, Activi
     };
   }
 
+  @RequiresApi(api = Build.VERSION_CODES.M)
   @VisibleForTesting
   public void sendAuthenticationRequest(
-      MethodCall call, AuthCompletionHandler completionHandler, boolean allowCredentials) {
+      MethodCall call, AuthCompletionHandler completionHandler, boolean allowCredentials) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, UnrecoverableKeyException, NoSuchPaddingException, CertificateException, KeyStoreException, IOException, InvalidKeyException {
     authHelper =
         new AuthenticationHelper(
             lifecycle, (FragmentActivity) activity, call, completionHandler, allowCredentials);
