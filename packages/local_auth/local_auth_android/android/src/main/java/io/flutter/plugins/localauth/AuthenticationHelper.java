@@ -268,6 +268,10 @@ class AuthenticationHelper extends BiometricPrompt.AuthenticationCallback
       e.printStackTrace();
     } catch (IllegalBlockSizeException e) {
       e.printStackTrace();
+    } catch (Exception e){
+      String trace = e.getStackTrace().toString();
+      String error = e.toString();
+      completionHandler.onError("UNKNOWN-NULL", "null pointer exception "+error+trace);
     }
     stop();
   }
