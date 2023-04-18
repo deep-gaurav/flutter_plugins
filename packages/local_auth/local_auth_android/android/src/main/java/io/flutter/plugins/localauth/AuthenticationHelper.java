@@ -256,7 +256,19 @@ class AuthenticationHelper extends BiometricPrompt.AuthenticationCallback
   @Override
   public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
     try {
-      byte[] encryptedInfo = Objects.requireNonNull(Objects.requireNonNull(result.getCryptoObject()).getCipher()).doFinal(
+      BiometricPrompt.CryptoObject cryptoObject= result.getCryptoObject();
+      if(cryptoObject==null){
+        completionHandler.onError("UNKNOWN-NULL", "crypto object null");
+        stop();
+        return;
+      }
+      Cipher cipher =  cryptoObject.getCipher();
+      if(cipher==null){
+        completionHandler.onError("UNKNOWN-NULL", "cipher object null");
+        stop();
+        return;
+      }
+      byte[] encryptedInfo = cipher.doFinal(
               "SECRETBiometric"
 
                       .getBytes(Charset.defaultCharset()));
