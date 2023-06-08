@@ -1,3 +1,29 @@
+## 2.4.5
+
+* Fixes Initial padding not working when map has not been created yet.
+
+## 2.4.4
+
+* Fixes Points losing precision when converting to LatLng.
+* Updates minimum Flutter version to 3.0.
+
+## 2.4.3
+
+* Updates code for stricter lint checks.
+
+## 2.4.2
+
+* Updates code for stricter lint checks.
+
+## 2.4.1
+
+* Update `androidx.test.espresso:espresso-core` to 3.5.1.
+
+## 2.4.0
+
+* Adds the ability to request a specific map renderer.
+* Updates code for new analysis options.
+
 ## 2.3.3
 
 * Update android gradle plugin to 7.3.1.

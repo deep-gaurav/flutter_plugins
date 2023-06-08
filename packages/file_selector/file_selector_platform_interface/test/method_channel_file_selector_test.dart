@@ -16,10 +16,15 @@ void main() {
     final List<MethodCall> log = <MethodCall>[];
 
     setUp(() {
-      plugin.channel.setMockMethodCallHandler((MethodCall methodCall) async {
-        log.add(methodCall);
-        return null;
-      });
+      _ambiguate(TestDefaultBinaryMessengerBinding.instance)!
+          .defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        plugin.channel,
+        (MethodCall methodCall) async {
+          log.add(methodCall);
+          return null;
+        },
+      );
 
       log.clear();
     });
@@ -43,49 +48,46 @@ void main() {
         await plugin
             .openFile(acceptedTypeGroups: <XTypeGroup>[group, groupTwo]);
 
-        expect(
+        expectMethodCall(
           log,
-          <Matcher>[
-            isMethodCall('openFile', arguments: <String, dynamic>{
-              'acceptedTypeGroups': <Map<String, dynamic>>[
-                group.toJSON(),
-                groupTwo.toJSON()
-              ],
-              'initialDirectory': null,
-              'confirmButtonText': null,
-              'multiple': false,
-            }),
-          ],
+          'openFile',
+          arguments: <String, dynamic>{
+            'acceptedTypeGroups': <Map<String, dynamic>>[
+              group.toJSON(),
+              groupTwo.toJSON()
+            ],
+            'initialDirectory': null,
+            'confirmButtonText': null,
+            'multiple': false,
+          },
         );
       });
       test('passes initialDirectory correctly', () async {
         await plugin.openFile(initialDirectory: '/example/directory');
 
-        expect(
+        expectMethodCall(
           log,
-          <Matcher>[
-            isMethodCall('openFile', arguments: <String, dynamic>{
-              'acceptedTypeGroups': null,
-              'initialDirectory': '/example/directory',
-              'confirmButtonText': null,
-              'multiple': false,
-            }),
-          ],
+          'openFile',
+          arguments: <String, dynamic>{
+            'acceptedTypeGroups': null,
+            'initialDirectory': '/example/directory',
+            'confirmButtonText': null,
+            'multiple': false,
+          },
         );
       });
       test('passes confirmButtonText correctly', () async {
         await plugin.openFile(confirmButtonText: 'Open File');
 
-        expect(
+        expectMethodCall(
           log,
-          <Matcher>[
-            isMethodCall('openFile', arguments: <String, dynamic>{
-              'acceptedTypeGroups': null,
-              'initialDirectory': null,
-              'confirmButtonText': 'Open File',
-              'multiple': false,
-            }),
-          ],
+          'openFile',
+          arguments: <String, dynamic>{
+            'acceptedTypeGroups': null,
+            'initialDirectory': null,
+            'confirmButtonText': 'Open File',
+            'multiple': false,
+          },
         );
       });
     });
@@ -108,49 +110,46 @@ void main() {
         await plugin
             .openFiles(acceptedTypeGroups: <XTypeGroup>[group, groupTwo]);
 
-        expect(
+        expectMethodCall(
           log,
-          <Matcher>[
-            isMethodCall('openFile', arguments: <String, dynamic>{
-              'acceptedTypeGroups': <Map<String, dynamic>>[
-                group.toJSON(),
-                groupTwo.toJSON()
-              ],
-              'initialDirectory': null,
-              'confirmButtonText': null,
-              'multiple': true,
-            }),
-          ],
+          'openFile',
+          arguments: <String, dynamic>{
+            'acceptedTypeGroups': <Map<String, dynamic>>[
+              group.toJSON(),
+              groupTwo.toJSON()
+            ],
+            'initialDirectory': null,
+            'confirmButtonText': null,
+            'multiple': true,
+          },
         );
       });
       test('passes initialDirectory correctly', () async {
         await plugin.openFiles(initialDirectory: '/example/directory');
 
-        expect(
+        expectMethodCall(
           log,
-          <Matcher>[
-            isMethodCall('openFile', arguments: <String, dynamic>{
-              'acceptedTypeGroups': null,
-              'initialDirectory': '/example/directory',
-              'confirmButtonText': null,
-              'multiple': true,
-            }),
-          ],
+          'openFile',
+          arguments: <String, dynamic>{
+            'acceptedTypeGroups': null,
+            'initialDirectory': '/example/directory',
+            'confirmButtonText': null,
+            'multiple': true,
+          },
         );
       });
       test('passes confirmButtonText correctly', () async {
         await plugin.openFiles(confirmButtonText: 'Open File');
 
-        expect(
+        expectMethodCall(
           log,
-          <Matcher>[
-            isMethodCall('openFile', arguments: <String, dynamic>{
-              'acceptedTypeGroups': null,
-              'initialDirectory': null,
-              'confirmButtonText': 'Open File',
-              'multiple': true,
-            }),
-          ],
+          'openFile',
+          arguments: <String, dynamic>{
+            'acceptedTypeGroups': null,
+            'initialDirectory': null,
+            'confirmButtonText': 'Open File',
+            'multiple': true,
+          },
         );
       });
     });
@@ -174,79 +173,115 @@ void main() {
         await plugin
             .getSavePath(acceptedTypeGroups: <XTypeGroup>[group, groupTwo]);
 
-        expect(
+        expectMethodCall(
           log,
-          <Matcher>[
-            isMethodCall('getSavePath', arguments: <String, dynamic>{
-              'acceptedTypeGroups': <Map<String, dynamic>>[
-                group.toJSON(),
-                groupTwo.toJSON()
-              ],
-              'initialDirectory': null,
-              'suggestedName': null,
-              'confirmButtonText': null,
-            }),
-          ],
+          'getSavePath',
+          arguments: <String, dynamic>{
+            'acceptedTypeGroups': <Map<String, dynamic>>[
+              group.toJSON(),
+              groupTwo.toJSON()
+            ],
+            'initialDirectory': null,
+            'suggestedName': null,
+            'confirmButtonText': null,
+          },
         );
       });
       test('passes initialDirectory correctly', () async {
         await plugin.getSavePath(initialDirectory: '/example/directory');
 
-        expect(
+        expectMethodCall(
           log,
-          <Matcher>[
-            isMethodCall('getSavePath', arguments: <String, dynamic>{
-              'acceptedTypeGroups': null,
-              'initialDirectory': '/example/directory',
-              'suggestedName': null,
-              'confirmButtonText': null,
-            }),
-          ],
+          'getSavePath',
+          arguments: <String, dynamic>{
+            'acceptedTypeGroups': null,
+            'initialDirectory': '/example/directory',
+            'suggestedName': null,
+            'confirmButtonText': null,
+          },
         );
       });
       test('passes confirmButtonText correctly', () async {
         await plugin.getSavePath(confirmButtonText: 'Open File');
 
-        expect(
+        expectMethodCall(
           log,
-          <Matcher>[
-            isMethodCall('getSavePath', arguments: <String, dynamic>{
-              'acceptedTypeGroups': null,
-              'initialDirectory': null,
-              'suggestedName': null,
-              'confirmButtonText': 'Open File',
-            }),
-          ],
+          'getSavePath',
+          arguments: <String, dynamic>{
+            'acceptedTypeGroups': null,
+            'initialDirectory': null,
+            'suggestedName': null,
+            'confirmButtonText': 'Open File',
+          },
         );
       });
-      group('#getDirectoryPath', () {
-        test('passes initialDirectory correctly', () async {
-          await plugin.getDirectoryPath(initialDirectory: '/example/directory');
+    });
+    group('#getDirectoryPath', () {
+      test('passes initialDirectory correctly', () async {
+        await plugin.getDirectoryPath(initialDirectory: '/example/directory');
 
-          expect(
-            log,
-            <Matcher>[
-              isMethodCall('getDirectoryPath', arguments: <String, dynamic>{
-                'initialDirectory': '/example/directory',
-                'confirmButtonText': null,
-              }),
-            ],
-          );
-        });
-        test('passes confirmButtonText correctly', () async {
-          await plugin.getDirectoryPath(confirmButtonText: 'Open File');
+        expectMethodCall(
+          log,
+          'getDirectoryPath',
+          arguments: <String, dynamic>{
+            'initialDirectory': '/example/directory',
+            'confirmButtonText': null,
+          },
+        );
+      });
+      test('passes confirmButtonText correctly', () async {
+        await plugin.getDirectoryPath(confirmButtonText: 'Select Folder');
 
-          expect(
-            log,
-            <Matcher>[
-              isMethodCall('getDirectoryPath', arguments: <String, dynamic>{
-                'initialDirectory': null,
-                'confirmButtonText': 'Open File',
-              }),
-            ],
-          );
-        });
+        expectMethodCall(
+          log,
+          'getDirectoryPath',
+          arguments: <String, dynamic>{
+            'initialDirectory': null,
+            'confirmButtonText': 'Select Folder',
+          },
+        );
+      });
+    });
+    group('#getDirectoryPaths', () {
+      test('passes initialDirectory correctly', () async {
+        await plugin.getDirectoryPaths(initialDirectory: '/example/directory');
+
+        expectMethodCall(
+          log,
+          'getDirectoryPaths',
+          arguments: <String, dynamic>{
+            'initialDirectory': '/example/directory',
+            'confirmButtonText': null,
+          },
+        );
+      });
+      test('passes confirmButtonText correctly', () async {
+        await plugin.getDirectoryPaths(
+            confirmButtonText: 'Select one or more Folders');
+
+        expectMethodCall(
+          log,
+          'getDirectoryPaths',
+          arguments: <String, dynamic>{
+            'initialDirectory': null,
+            'confirmButtonText': 'Select one or more Folders',
+          },
+        );
       });
     });
   });
 }
+
+void expectMethodCall(
+  List<MethodCall> log,
+  String methodName, {
+  Map<String, dynamic>? arguments,
+}) {
+  expect(log, <Matcher>[isMethodCall(methodName, arguments: arguments)]);
+}
+
+/// This allows a value of type T or T? to be treated as a value of type T?.
+///
+/// We use this so that APIs that have become non-nullable can still be used
+/// with `!` and `?` on the stable branch.
+T? _ambiguate<T>(T? value) => value;
